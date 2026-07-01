@@ -39,6 +39,9 @@ select,input[type=number]{background:rgba(255,255,255,.05);border:1px solid var(
 select:focus,input[type=number]:focus{border-color:var(--gold);}
 input[type=number]{width:90px;cursor:text;}
 input[type=number]::-webkit-inner-spin-button{opacity:.4;}
+input[type=date]{cursor:pointer;color-scheme:dark;}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(2) hue-rotate(5deg);cursor:pointer;opacity:.8;}
+input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;}
 .btn{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--ink);border:none;padding:12px 28px;border-radius:6px;cursor:pointer;font-weight:700;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(200,168,75,.3);}
 .btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(200,168,75,.4);}
 .btn-sec{background:transparent;border:1px solid var(--gold);color:var(--gold);box-shadow:none;}
@@ -125,8 +128,25 @@ input[type=number]::-webkit-inner-spin-button{opacity:.4;}
       </select>
     </div>
     <div>
+      <label>Data do próximo sorteio</label>
+      <input type="date" id="inpProxData" onchange="mostrarLuaProxima()">
+    </div>
+    <div>
       <label>&nbsp;</label>
       <button class="btn" onclick="run()">⟐ Analisar</button>
+    </div>
+  </div>
+
+  <!-- Indicador da lua do próximo sorteio -->
+  <div id="proxCard" style="display:none;margin-top:20px;background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.3);border-radius:10px;padding:16px 20px;display:none;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="font-size:42px;line-height:1;" id="proxEmoji"></div>
+    <div>
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:4px;">Fase da Lua no Próximo Sorteio</div>
+      <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--gold-l);font-weight:700;" id="proxNome"></div>
+      <div style="font-size:14px;color:var(--silver);font-style:italic;margin-top:3px;" id="proxData"></div>
+    </div>
+    <div style="margin-left:auto;">
+      <button class="btn btn-sec" onclick="irParaFaseProxima()" id="proxBtn" style="font-size:11px;padding:9px 18px;">Ver análise desta fase →</button>
     </div>
   </div>
 </div>
@@ -414,7 +434,42 @@ function ha(hex,a){
   return `rgba(${r},${g},${b},${a})`;
 }
 
-window.addEventListener('load',run);
+// ── LUA DO PRÓXIMO SORTEIO ───────────────────────────────────
+let proxPhaseKey = null;
+
+function mostrarLuaProxima() {
+  const val = document.getElementById('inpProxData').value;
+  const card = document.getElementById('proxCard');
+
+  if (!val) { card.style.display = 'none'; return; }
+
+  const [y, m, d] = val.split('-');
+  const date = new Date(+y, +m - 1, +d);
+  const ph = moonPhase(date);
+  const pInfo = PHASES.find(p => p.key === ph);
+  proxPhaseKey = ph;
+
+  // Formatar data em pt-BR
+  const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const diaSem = diasSemana[date.getDay()];
+  const dataFmt = `${diaSem}, ${d}/${m}/${y}`;
+
+  document.getElementById('proxEmoji').textContent = pInfo.emoji;
+  document.getElementById('proxNome').textContent = pInfo.name;
+  document.getElementById('proxData').textContent = dataFmt;
+  document.getElementById('proxBtn').textContent = `Ver análise — ${pInfo.name} →`;
+  card.style.display = 'flex';
+}
+
+function irParaFaseProxima() {
+  if (!proxPhaseKey) return;
+  selectPhase(proxPhaseKey);
+  // Scroll suave até as abas
+  document.getElementById('tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+window.addEventListener('load', run);
 </script>
 </body>
 </html>
